@@ -33,6 +33,7 @@ import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import android.R.bool;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -76,15 +77,24 @@ public class SplashScreen extends CordovaPlugin {
 	 */
 	private int orientation;
 
+	private Display display;
+	private Context context;
+
 	/*** 图片文件储存位置 */
 	private String savePath = Environment.getExternalStorageDirectory().getPath() + "/box/";
 
 	private SharedPreferences boxPreferences;
 	private Editor editor;
 
-	private Dialog guideDialog;
-	private List<View> guideViews = new ArrayList<View>();
-	private ViewPager guidePager;
+	private Dialog mGuideDialog; // 引导页面显示容器
+	private List<View> mGuideViews; // 引导页内容list
+	private ViewPager mGuidePager; // 引导页面控制控件
+
+	private String[] testGuidePaths = { "http://img5.duitang.com/uploads/item/201206/06/20120606175141_5vAs2.thumb.700_0.jpeg", "http://image.tianjimedia.com/uploadImages/2012/265/6Z25XW17035N.jpg",
+			"http://static12.photo.sina.com.cn/middle/001ozpVvgy6GHWL7nrd2b&690.png", "http://static16.photo.sina.com.cn/middle/001ozpVvgy6GHWLgLkr9f&690.png",
+			"http://static6.photo.sina.com.cn/middle/001ozpVvgy6GHWLc78V55&690.png" };
+
+	private String testSplash = "http://image.tianjimedia.com/uploadImages/2014/247/37/GTDCF51UT479_1000x500.jpg";
 
 	// Helper to be compile-time compatible with both Cordova 3.x and 4.x.
 	private View getView() {
@@ -98,6 +108,9 @@ public class SplashScreen extends CordovaPlugin {
 	@Override
 	protected void pluginInitialize() {
 		Log.i(LOG_TAG, "firstShow:" + firstShow);
+
+		display = cordova.getActivity().getWindowManager().getDefaultDisplay();
+		context = webView.getContext();
 
 		boxPreferences = cordova.getActivity().getSharedPreferences("box_data", Context.MODE_PRIVATE);
 		editor = boxPreferences.edit();
@@ -132,7 +145,11 @@ public class SplashScreen extends CordovaPlugin {
 		// after Template.body.rendered
 		showSplashScreen(false);
 
-		saveImage();
+		saveImage(testSplash, true);
+
+		for (int i = 0; i < testGuidePaths.length; i++) {
+			saveImage(testGuidePaths[i], false);
+		}
 	}
 
 	/**
@@ -240,99 +257,67 @@ public class SplashScreen extends CordovaPlugin {
 			public void run() {
 				if (splashDialog != null && splashDialog.isShowing()) {
 
-					// splashDialog.dismiss();
-					// splashDialog = null;
-					// splashImageView = null;
+					Boolean isFirst = boxPreferences.getBoolean("isFirst", true);
 
-					Display display = cordova.getActivity().getWindowManager().getDefaultDisplay();
-					Context context = webView.getContext();
-					guidePager = new ViewPager(context);
-					LayoutParams layoutParams = new LayoutParams(display.getWidth(), display.getHeight());
+					if (isFirst && isComplete(testGuidePaths)) {
 
-					String[] urlPaths = { "http://img5.duitang.com/uploads/item/201206/06/20120606175141_5vAs2.thumb.700_0.jpeg",
-							"http://image.tianjimedia.com/uploadImages/2014/247/37/GTDCF51UT479_1000x500.jpg", "http://image.tianjimedia.com/uploadImages/2012/265/6Z25XW17035N.jpg",
-							"http://static12.photo.sina.com.cn/middle/001ozpVvgy6GHWL7nrd2b&690.png", "http://static16.photo.sina.com.cn/middle/001ozpVvgy6GHWLgLkr9f&690.png",
-							"http://static6.photo.sina.com.cn/middle/001ozpVvgy6GHWLc78V55&690.png" };
+						mGuidePager = new ViewPager(context);
+						mGuideViews = new ArrayList<View>();
+						LayoutParams layoutParams = new LayoutParams(display.getWidth(), display.getHeight());
+						ImageView imageView;
+						String filePath;
 
-					for (int i = 0; i < urlPaths.length; i++) {
+						for (int i = 0; i < testGuidePaths.length; i++) {
 
-						String filePath = savePath + convertUrlToFileName(urlPaths[i]);
-
-						ImageView imageView = new ImageView(context);
-
-						imageView.setImageBitmap(BitmapFactory.decodeFile(filePath));
-						if (isMaintainAspectRatio()) {
+							imageView = new ImageView(context);
+							filePath = savePath + convertUrlToFileName(testGuidePaths[i]);
+							imageView.setImageBitmap(BitmapFactory.decodeFile(filePath));
 							imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-						} else {
-							imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-						}
+							imageView.setLayoutParams(layoutParams);
 
-						imageView.setLayoutParams(layoutParams);
+							if (i == testGuidePaths.length - 1) {
 
-						if (i == urlPaths.length - 1) {
+								imageView.setOnClickListener(new OnClickListener() {
 
-							imageView.setOnClickListener(new OnClickListener() {
+									@Override
+									public void onClick(View v) {
 
-								@Override
-								public void onClick(View v) {
+										splashDialog.dismiss();
+										splashDialog = null;
+										splashImageView = null;
 
-									splashDialog.dismiss();
-									splashDialog = null;
-									splashImageView = null;
+										mGuideDialog.dismiss();
+										mGuideDialog = null;
+										mGuidePager = null;
 
-									guideDialog.dismiss();
-									guideDialog = null;
-									guidePager = null;
+										 editor.putBoolean("isFirst", false);
+										 editor.commit();
 
-								}
-							});
-						}
-						guideViews.add(imageView);
-					}
-
-					guidePager.setAdapter(new PagerAdapter() {
-
-						// 销毁arg1位置的界面
-						@Override
-						public void destroyItem(View arg0, int arg1, Object arg2) {
-							((ViewPager) arg0).removeView(guideViews.get(arg1));
-						}
-
-						// 获得当前界面数
-						@Override
-						public int getCount() {
-							if (guideViews != null) {
-								return guideViews.size();
+									}
+								});
 							}
-
-							return 0;
+							mGuideViews.add(imageView);
 						}
 
-						// 初始化arg1位置的界面
-						@Override
-						public Object instantiateItem(View arg0, int arg1) {
+						mGuidePager.setAdapter(new guideAdapter());
 
-							((ViewPager) arg0).addView(guideViews.get(arg1), 0);
-
-							return guideViews.get(arg1);
+						mGuideDialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
+						// check to see if the splash screen should be full
+						// screen
+						if ((cordova.getActivity().getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == WindowManager.LayoutParams.FLAG_FULLSCREEN) {
+							splashDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 						}
+						mGuideDialog.setContentView(mGuidePager);
+						mGuideDialog.setCancelable(false);
+						mGuideDialog.show();
 
-						// 判断是否由对象生成界面
-						@Override
-						public boolean isViewFromObject(View arg0, Object arg1) {
-							return (arg0 == arg1);
-						}
+					} else {
 
-					});
+						splashDialog.dismiss();
+						splashDialog = null;
+						splashImageView = null;
 
-					guideDialog = new Dialog(context, android.R.style.Theme_Translucent_NoTitleBar);
-					// check to see if the splash screen should be full screen
-					if ((cordova.getActivity().getWindow().getAttributes().flags & WindowManager.LayoutParams.FLAG_FULLSCREEN) == WindowManager.LayoutParams.FLAG_FULLSCREEN) {
-						splashDialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 					}
-					guideDialog.setContentView(guidePager);
-					guideDialog.setCancelable(false);
-					guideDialog.show();
 
 				}
 			}
@@ -357,9 +342,6 @@ public class SplashScreen extends CordovaPlugin {
 
 		cordova.getActivity().runOnUiThread(new Runnable() {
 			public void run() {
-				// Get reference to display
-				Display display = cordova.getActivity().getWindowManager().getDefaultDisplay();
-				Context context = webView.getContext();
 
 				// Use an ImageView to render the image because of its flexible
 				// scaling options.
@@ -470,11 +452,75 @@ public class SplashScreen extends CordovaPlugin {
 
 	/**
 	 * 
-	 * 储存广告图片至本地
+	 * 引导页viewpager适配器
+	 * 
+	 * @author SunX
+	 * 
 	 */
-	private void saveImage() {
+	private class guideAdapter extends PagerAdapter {
 
-		// 开启子线程，缓存广告图片存储本地，方便下次启动使用新广告图
+		// 销毁arg1位置的界面
+		@Override
+		public void destroyItem(View arg0, int arg1, Object arg2) {
+			((ViewPager) arg0).removeView(mGuideViews.get(arg1));
+		}
+
+		// 获得当前界面数
+		@Override
+		public int getCount() {
+			if (mGuideViews != null) {
+				return mGuideViews.size();
+			}
+
+			return 0;
+		}
+
+		// 初始化arg1位置的界面
+		@Override
+		public Object instantiateItem(View arg0, int arg1) {
+
+			((ViewPager) arg0).addView(mGuideViews.get(arg1), 0);
+
+			return mGuideViews.get(arg1);
+		}
+
+		// 判断是否由对象生成界面
+		@Override
+		public boolean isViewFromObject(View arg0, Object arg1) {
+			return (arg0 == arg1);
+		}
+
+	};
+
+	/**
+	 * 检测引导图片是否全部缓存至本地
+	 * 
+	 * @param paths
+	 *            引导图片地址集合
+	 * @return 图片全部缓存至本地返回true，其余false
+	 */
+	private Boolean isComplete(String[] paths) {
+		for (int i = 0; i < paths.length; i++) {
+			String filePath = savePath + convertUrlToFileName(testGuidePaths[i]);
+			if (null == BitmapFactory.decodeFile(filePath)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * 储存图片至本地
+	 * 
+	 * @param path
+	 *            图片地址
+	 * @param isSplash
+	 *            是否为启动图片 true，是；false，否
+	 * 
+	 */
+	private void saveImage(final String path, final Boolean isSplash) {
+
+		// 开启子线程，缓存图片存储本地
 		new Thread() {
 			public void run() {
 				try {
@@ -484,19 +530,12 @@ public class SplashScreen extends CordovaPlugin {
 						file.mkdir();
 					}
 
-					String[] urlPaths = { "http://img5.duitang.com/uploads/item/201206/06/20120606175141_5vAs2.thumb.700_0.jpeg",
-							"http://image.tianjimedia.com/uploadImages/2014/247/37/GTDCF51UT479_1000x500.jpg", "http://image.tianjimedia.com/uploadImages/2012/265/6Z25XW17035N.jpg",
-							"http://static12.photo.sina.com.cn/middle/001ozpVvgy6GHWL7nrd2b&690.png", "http://static16.photo.sina.com.cn/middle/001ozpVvgy6GHWLgLkr9f&690.png",
-							"http://static6.photo.sina.com.cn/middle/001ozpVvgy6GHWLc78V55&690.png" };
-
-					String splashUrl = urlPaths[(int) (Math.random() * urlPaths.length)];
-
-					String filePath = savePath + convertUrlToFileName(splashUrl);
+					String filePath = savePath + convertUrlToFileName(path);
 
 					File saveFile = new File(filePath);
 					if (!saveFile.exists()) {
 
-						URL url = new URL(splashUrl);
+						URL url = new URL(path);
 						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 						conn.setConnectTimeout(6 * 1000); // 注意要设置超时，设置时间不要超过10秒，避免被android系统回收
 
@@ -511,8 +550,11 @@ public class SplashScreen extends CordovaPlugin {
 
 					}
 
-					editor.putString("filePath", filePath);
-					editor.commit();
+					// 记录启动图片缓存位置
+					if (isSplash) {
+						editor.putString("filePath", filePath);
+						editor.commit();
+					}
 
 				} catch (Exception e) {
 					e.printStackTrace();

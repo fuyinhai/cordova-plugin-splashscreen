@@ -132,45 +132,49 @@ screen visible for app startup.
 
 
 
+
+
 ##  加载页 动态配置  
+######动态设置 加载页 URL
+ \<preference name="LoadPageInfoUrl"       value="$LOADPAGEINFOURL"/> 
 
-动态设置 加载页 URL
-<preference name="LoadPageInfoUrl"       value="$LOADPAGEINFOURL" />
+例:</br>
+ http://www.yunbaopu.com
 
-例:
-http://www.yunbaopu.com
-
-接受参数
+接受参数<br>
 http://www.yunbaopu.com?height=667&width=375
 
-返回  json数据
+返回  'json'数据<br>
 
+```
 {
     "data": {
         "version": "2",
-        "imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg",
+        "imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/       oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg",
     },
-    "respCode": "100200",
+     "respCode": "100200",
     "respMsg": "成功"
 }
+```
+
 
 
 
 ##  引导页 动态配置 
 动态设置 引导页 URL
-<preference name="guidePageInfoUrl"       value="$GUIDEPAGEINFOURL" />
+\<preference name="guidePageInfoUrl"       value="$GUIDEPAGEINFOURL" />
 
-例:
+例:</br>
 http://www.yunbaopu.com
 
 
-插件接受参数生成的请求 URL
+插件接受参数生成的请求 URL</br>
 http://www.yunbaopu.com?height=667&width=375
 
 
 返回  json数据
 
-
+```
 {
     "data": {
         "version": "1",
@@ -184,26 +188,31 @@ http://www.yunbaopu.com?height=667&width=375
     "respCode": "100200",
     "respMsg": "成功"
 }
+```
+
 
 
 ## 默认3张 引导页 数
-<preference name="GUIDEIMAGECOUNT" />
+\<preference name="GUIDEIMAGECOUNT" />
 
-引导页图片 添加命名的字母前缀.
-<resource-file src="src/ios/GuideImage/a-guide-480h.png" />
-<resource-file src="src/ios/GuideImage/b-guide-480h.png" />
-<resource-file src="src/ios/GuideImage/c-guide-480h.png" />
+引导页图片 添加命名的字母前缀.<br>
 
-<resource-file src="src/ios/GuideImage/a-guide-568h.png" />
-<resource-file src="src/ios/GuideImage/b-guide-568h.png" />
-<resource-file src="src/ios/GuideImage/c-guide-568h.png" />
+```
+    <resource-file src="src/ios/GuideImage/a-guide-480h.png" />
+    <resource-file src="src/ios/GuideImage/b-guide-480h.png" />
+    <resource-file src="src/ios/GuideImage/c-guide-480h.png" />
 
-<resource-file src="src/ios/GuideImage/a-guide-667h.png" />
-<resource-file src="src/ios/GuideImage/b-guide-667h.png" />
-<resource-file src="src/ios/GuideImage/c-guide-667h.png" />
+    <resource-file src="src/ios/GuideImage/a-guide-568h.png" />
+    <resource-file src="src/ios/GuideImage/b-guide-568h.png" />
+    <resource-file src="src/ios/GuideImage/c-guide-568h.png" />
 
-<resource-file src="src/ios/GuideImage/a-guide-736h.png" />
-<resource-file src="src/ios/GuideImage/b-guide-736h.png" />
-<resource-file src="src/ios/GuideImage/c-guide-736h.png" />
+    <resource-file src="src/ios/GuideImage/a-guide-667h.png" />
+    <resource-file src="src/ios/GuideImage/b-guide-667h.png" />
+    <resource-file src="src/ios/GuideImage/c-guide-667h.png" />
+
+    <resource-file src="src/ios/GuideImage/a-guide-736h.png" />
+    <resource-file src="src/ios/GuideImage/b-guide-736h.png" />
+    <resource-file src="src/ios/GuideImage/c-guide-736h.png" />
+```
 
 

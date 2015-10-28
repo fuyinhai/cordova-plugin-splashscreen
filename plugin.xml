@@ -19,8 +19,8 @@
 -->
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-           id="cordova-plugin-splashscreen"
-      version="2.1.0">
+        id="cordova-plugin-splashscreen"
+        version="2.1.0">
     <name>Splashscreen</name>
     <description>Cordova Splashscreen Plugin</description>
     <license>Apache 2.0</license>
@@ -29,20 +29,21 @@
     <issue>https://issues.apache.org/jira/browse/CB/component/12320653</issue>
 
     <engines>
-        <engine name="cordova-android" version=">=3.6.0" /><!-- Requires CordovaPlugin.preferences -->
+        <engine name="cordova-android" version=">=3.6.0"/>
+        <!-- Requires CordovaPlugin.preferences -->
     </engines>
 
     <js-module src="www/splashscreen.js" name="SplashScreen">
-        <clobbers target="navigator.splashscreen" />
+        <clobbers target="navigator.splashscreen"/>
     </js-module>
 
     <!-- 动态加载的 url   -->
-    <preference name="GUIDEPAGEINFOURL" />
-    <preference name="LOADPAGEINFOURL" />
-    
+    <preference name="GUIDEPAGEINFOURL"/>
+    <preference name="LOADPAGEINFOURL"/>
+
     <!--  默认引导页 的图片配置  -->
-<!--    <preference name="IMAGEPATH" />-->
-    <preference name="GUIDEIMAGECOUNT" />
+    <!--    <preference name="IMAGEPATH" />-->
+    <preference name="GUIDEIMAGECOUNT"/>
 
 
     <!-- android -->
@@ -54,11 +55,17 @@
             </feature>
         </config-file>
 
-        <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen" />
+        <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen"/>
 
-        <source-file src="src/android/GuideImage/a_guide.png" target-dir="res/drawable" />
-        <source-file src="src/android/GuideImage/b_guide.png" target-dir="res/drawable" />
-        <source-file src="src/android/GuideImage/c_guide.png" target-dir="res/drawable" />
+        <source-file src="src/android/GuideImage/a_guide.png" target-dir="res/drawable"/>
+        <source-file src="src/android/GuideImage/b_guide.png" target-dir="res/drawable"/>
+        <source-file src="src/android/GuideImage/c_guide.png" target-dir="res/drawable"/>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest/application">
+            <meta-data android:name="GUIDEPAGEINFOURL" android:value="$GUIDEPAGEINFOURL"/>
+            <meta-data android:name="LOADPAGEINFOURL" android:value="$LOADPAGEINFOURL"/>
+            <meta-data android:name="GUIDEIMAGECOUNT" android:value="VPREFIX_$GUIDEIMAGECOUNT"/>
+        </config-file>
 
     </platform>
 
@@ -66,64 +73,64 @@
     <platform name="amazon-fireos">
         <config-file target="res/xml/config.xml" parent="/*">
             <feature name="SplashScreen">
-            <param name="android-package" value="org.apache.cordova.splashscreen.SplashScreen"/>
+                <param name="android-package" value="org.apache.cordova.splashscreen.SplashScreen"/>
             </feature>
         </config-file>
 
-        <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen" />
+        <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen"/>
     </platform>
 
     <!-- ubuntu -->
     <platform name="ubuntu">
-        <header-file src="src/ubuntu/splashscreen.h" />
-        <source-file src="src/ubuntu/splashscreen.cpp" />
+        <header-file src="src/ubuntu/splashscreen.h"/>
+        <source-file src="src/ubuntu/splashscreen.cpp"/>
     </platform>
 
     <!-- ios -->
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
-		    <feature name="SplashScreen">
-			    <param name="ios-package" value="CDVSplashScreen"/>
-			    <param name="onload" value="true"/>
-		    </feature>
+            <feature name="SplashScreen">
+                <param name="ios-package" value="CDVSplashScreen"/>
+                <param name="onload" value="true"/>
+            </feature>
         </config-file>
-        
-        <header-file src="src/ios/CDVSplashScreen.h" />
-        <source-file src="src/ios/CDVSplashScreen.m" />
-        <header-file src="src/ios/CDVViewController+SplashScreen.h" />
-        <source-file src="src/ios/CDVViewController+SplashScreen.m" />
 
-	    <framework src="CoreGraphics.framework" />
-        
+        <header-file src="src/ios/CDVSplashScreen.h"/>
+        <source-file src="src/ios/CDVSplashScreen.m"/>
+        <header-file src="src/ios/CDVViewController+SplashScreen.h"/>
+        <source-file src="src/ios/CDVViewController+SplashScreen.m"/>
+
+        <framework src="CoreGraphics.framework"/>
+
         <!--  加载页 和 引导页 url    -->
-        <preference name="LoadPageInfoUrl"       value="$LOADPAGEINFOURL" />
-        <preference name="guidePageInfoUrl"       value="$GUIDEPAGEINFOURL" />
-        
-        
+        <preference name="LoadPageInfoUrl" value="$LOADPAGEINFOURL"/>
+        <preference name="guidePageInfoUrl" value="$GUIDEPAGEINFOURL"/>
+
+
         <!--   默认引导页图片      -->
-        <preference name="guideImageCount"       value="$GUIDEIMAGECOUNT" />
-        
-        <resource-file src="src/ios/GuideImage/a-guide-480h.png" />
-        <resource-file src="src/ios/GuideImage/b-guide-480h.png" />
-        <resource-file src="src/ios/GuideImage/c-guide-480h.png" />
-        
-        <resource-file src="src/ios/GuideImage/a-guide-568h.png" />
-        <resource-file src="src/ios/GuideImage/b-guide-568h.png" />
-        <resource-file src="src/ios/GuideImage/c-guide-568h.png" />
-        
-        <resource-file src="src/ios/GuideImage/a-guide-667h.png" />
-        <resource-file src="src/ios/GuideImage/b-guide-667h.png" />
-        <resource-file src="src/ios/GuideImage/c-guide-667h.png" />
-        
-        <resource-file src="src/ios/GuideImage/a-guide-736h.png" />
-        <resource-file src="src/ios/GuideImage/b-guide-736h.png" />
-        <resource-file src="src/ios/GuideImage/c-guide-736h.png" />
-        
+        <preference name="guideImageCount" value="$GUIDEIMAGECOUNT"/>
+
+        <resource-file src="src/ios/GuideImage/a-guide-480h.png"/>
+        <resource-file src="src/ios/GuideImage/b-guide-480h.png"/>
+        <resource-file src="src/ios/GuideImage/c-guide-480h.png"/>
+
+        <resource-file src="src/ios/GuideImage/a-guide-568h.png"/>
+        <resource-file src="src/ios/GuideImage/b-guide-568h.png"/>
+        <resource-file src="src/ios/GuideImage/c-guide-568h.png"/>
+
+        <resource-file src="src/ios/GuideImage/a-guide-667h.png"/>
+        <resource-file src="src/ios/GuideImage/b-guide-667h.png"/>
+        <resource-file src="src/ios/GuideImage/c-guide-667h.png"/>
+
+        <resource-file src="src/ios/GuideImage/a-guide-736h.png"/>
+        <resource-file src="src/ios/GuideImage/b-guide-736h.png"/>
+        <resource-file src="src/ios/GuideImage/c-guide-736h.png"/>
+
     </platform>
 
     <!-- blackberry10 -->
     <platform name="blackberry10">
-        <source-file src="src/blackberry10/index.js" target-dir="SplashScreen" />
+        <source-file src="src/blackberry10/index.js" target-dir="SplashScreen"/>
         <config-file target="www/config.xml" parent="/widget">
             <feature name="SplashScreen" value="SplashScreen"/>
         </config-file>
@@ -138,36 +145,36 @@
             </feature>
         </config-file>
 
-        <source-file src="src/wp/SplashScreen.cs" />
-        <source-file src="src/wp/ResolutionHelper.cs" />
+        <source-file src="src/wp/SplashScreen.cs"/>
+        <source-file src="src/wp/ResolutionHelper.cs"/>
 
     </platform>
 
     <!-- windows8 -->
     <platform name="windows8">
         <js-module src="www/windows/SplashScreenProxy.js" name="SplashScreenProxy">
-            <merges target="" />
+            <merges target=""/>
         </js-module>
     </platform>
 
     <!-- windows -->
     <platform name="windows">
         <js-module src="www/windows/SplashScreenProxy.js" name="SplashScreenProxy">
-            <merges target="" />
+            <merges target=""/>
         </js-module>
     </platform>
 
     <!-- tizen -->
     <platform name="tizen">
         <js-module src="src/tizen/SplashScreenProxy.js" name="SplashScreenProxy">
-            <runs />
+            <runs/>
         </js-module>
     </platform>
 
     <!-- browser -->
     <platform name="browser">
         <js-module src="src/browser/SplashScreenProxy.js" name="SplashScreenProxy">
-            <runs />
+            <runs/>
         </js-module>
     </platform>
 </plugin>

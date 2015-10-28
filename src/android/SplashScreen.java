@@ -43,6 +43,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Environment;
@@ -92,11 +93,15 @@ public class SplashScreen extends CordovaPlugin {
 	private List<View> mGuideViews; // 引导页内容list
 	private ViewPager mGuidePager; // 引导页面控制控件
 
-	private String[] testGuidePaths = { "http://img5.duitang.com/uploads/item/201206/06/20120606175141_5vAs2.thumb.700_0.jpeg", "http://image.tianjimedia.com/uploadImages/2012/265/6Z25XW17035N.jpg",
+	private Object[] testGuidePaths = { "http://img5.duitang.com/uploads/item/201206/06/20120606175141_5vAs2.thumb.700_0.jpeg", "http://image.tianjimedia.com/uploadImages/2012/265/6Z25XW17035N.jpg",
 			"http://static12.photo.sina.com.cn/middle/001ozpVvgy6GHWL7nrd2b&690.png", "http://static16.photo.sina.com.cn/middle/001ozpVvgy6GHWLgLkr9f&690.png",
 			"http://static6.photo.sina.com.cn/middle/001ozpVvgy6GHWLc78V55&690.png" };
 
 	private String testSplash = "http://image.tianjimedia.com/uploadImages/2014/247/37/GTDCF51UT479_1000x500.jpg";
+
+	String GUIDEPAGEINFOURL;
+	String LOADPAGEINFOURL;
+	int GUIDEIMAGECOUNT;
 
 	// Helper to be compile-time compatible with both Cordova 3.x and 4.x.
 	private View getView() {
@@ -150,7 +155,10 @@ public class SplashScreen extends CordovaPlugin {
 		ActivityInfo info;
 		try {
 			info = cordova.getActivity().getPackageManager().getActivityInfo(cordova.getActivity().getComponentName(), PackageManager.GET_META_DATA);
-			String requestUrl = info.applicationInfo.metaData.getString("REQUEST_URL");
+			GUIDEPAGEINFOURL = info.applicationInfo.metaData.getString("GUIDEPAGEINFOURL");
+			LOADPAGEINFOURL = info.applicationInfo.metaData.getString("LOADPAGEINFOURL");
+			GUIDEIMAGECOUNT = info.applicationInfo.metaData.getInt("GUIDEIMAGECOUNT", 0);
+
 		} catch (NameNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -265,11 +273,12 @@ public class SplashScreen extends CordovaPlugin {
 	private void removeSplashScreen() {
 		cordova.getActivity().runOnUiThread(new Runnable() {
 			public void run() {
-				if (splashDialog != null && splashDialog.isShowing()) {
+				if (splashDialog != null && splashDialog.isShowing() && null == mGuideDialog) {
 
-					Boolean isFirst = boxPreferences.getBoolean("isFirst", true);
+					final Boolean isFirst = boxPreferences.getBoolean("isFirst", true);
+					final Boolean show = boxPreferences.getBoolean("show", false);
 
-					if (isFirst && isComplete(testGuidePaths)) {
+					if (isFirst) {
 
 						mGuidePager = new ViewPager(context);
 						mGuideViews = new ArrayList<View>();
@@ -277,11 +286,29 @@ public class SplashScreen extends CordovaPlugin {
 						ImageView imageView;
 						String filePath;
 
+						final Boolean isComplete = isComplete(testGuidePaths);
+
+						if (isComplete && show) {
+
+						} else {
+							testGuidePaths = new Object[3];
+							testGuidePaths[0] = cordova.getActivity().getResources().getIdentifier("a_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
+							testGuidePaths[1] = cordova.getActivity().getResources().getIdentifier("b_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
+							testGuidePaths[2] = cordova.getActivity().getResources().getIdentifier("c_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
+
+						}
+
 						for (int i = 0; i < testGuidePaths.length; i++) {
 
 							imageView = new ImageView(context);
-							filePath = savePath + convertUrlToFileName(testGuidePaths[i]);
-							imageView.setImageBitmap(BitmapFactory.decodeFile(filePath));
+
+							if (isComplete && show) {
+								filePath = savePath + convertUrlToFileName(testGuidePaths[i]);
+								imageView.setImageBitmap(BitmapFactory.decodeFile(filePath));
+							} else {
+								imageView.setImageResource((Integer) testGuidePaths[i]);
+							}
+
 							imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 							imageView.setLayoutParams(layoutParams);
 
@@ -292,17 +319,25 @@ public class SplashScreen extends CordovaPlugin {
 									@Override
 									public void onClick(View v) {
 
-										splashDialog.dismiss();
-										splashDialog = null;
-										splashImageView = null;
-
 										mGuideDialog.dismiss();
 										mGuideDialog = null;
 										mGuidePager = null;
 
-										editor.putBoolean("isFirst", false);
+										splashDialog.dismiss();
+										splashDialog = null;
+										splashImageView = null;
+
+										editor.putBoolean("show", true);
 										editor.commit();
 
+										if (isComplete && show) {
+
+											editor.putBoolean("isFirst", false);
+											editor.commit();
+
+											editor.putBoolean("show", false);
+											editor.commit();
+										}
 									}
 								});
 							}
@@ -509,7 +544,7 @@ public class SplashScreen extends CordovaPlugin {
 	 *            引导图片地址集合
 	 * @return 图片全部缓存至本地返回true，其余false
 	 */
-	private Boolean isComplete(String[] paths) {
+	private Boolean isComplete(Object[] paths) {
 		for (int i = 0; i < paths.length; i++) {
 			String filePath = savePath + convertUrlToFileName(testGuidePaths[i]);
 			if (null == BitmapFactory.decodeFile(filePath)) {
@@ -528,7 +563,7 @@ public class SplashScreen extends CordovaPlugin {
 	 *            是否为启动图片 true，是；false，否
 	 * 
 	 */
-	private void saveImage(final String path, final Boolean isSplash) {
+	private void saveImage(final Object path, final Boolean isSplash) {
 
 		// 开启子线程，缓存图片存储本地
 		new Thread() {
@@ -545,7 +580,7 @@ public class SplashScreen extends CordovaPlugin {
 					File saveFile = new File(filePath);
 					if (!saveFile.exists()) {
 
-						URL url = new URL(path);
+						URL url = new URL((String) path);
 						HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 						conn.setConnectTimeout(6 * 1000); // 注意要设置超时，设置时间不要超过10秒，避免被android系统回收
 
@@ -592,10 +627,10 @@ public class SplashScreen extends CordovaPlugin {
 	 * 
 	 * @param url
 	 */
-	private String convertUrlToFileName(String url) {
+	private String convertUrlToFileName(Object url) {
 		String name = "";
 		if (url != null && !"".equals(url)) {
-			name = url.substring(url.lastIndexOf("/") + 1, url.length());
+			name = ((String) url).substring(((String) url).lastIndexOf("/") + 1, ((String) url).length());
 		}
 		return name;
 	}

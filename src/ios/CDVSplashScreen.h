@@ -6,9 +6,9 @@
  to you under the Apache License, Version 2.0 (the
  "License"); you may not use this file except in compliance
  with the License.  You may obtain a copy of the License at
-
+ 
  http://www.apache.org/licenses/LICENSE-2.0
-
+ 
  Unless required by applicable law or agreed to in writing,
  software distributed under the License is distributed on an
  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -30,14 +30,40 @@ typedef struct {
     
 } CDV_iOSDevice;
 
-@interface CDVSplashScreen : CDVPlugin {
+@interface CDVSplashScreen : CDVPlugin <UIScrollViewDelegate,UIGestureRecognizerDelegate>
+{
     UIActivityIndicatorView* _activityView;
     UIImageView* _imageView;
     NSString* _curImageName;
     BOOL _visible;
 }
 
+@property (strong,nonatomic) UIScrollView *guideView;
+
 - (void)show:(CDVInvokedUrlCommand*)command;
 - (void)hide:(CDVInvokedUrlCommand*)command;
 
 @end
+
+
+
+
+
+#pragma mark 网络请求
+/***************************************************************************/
+typedef void (^FinishBlock)(NSData *dataDic);
+typedef void (^ErrorBlock)(NSString *dataString);
+
+@interface HttpResponse : NSObject<NSURLConnectionDataDelegate>
+
+@property (strong, nonatomic) NSMutableData *resultData;
+@property (strong, nonatomic) FinishBlock finishBlock;
+@property (strong, nonatomic) ErrorBlock errorBlock;
+
++ (void)postRequestWithPath:(NSString *)path
+                  paramters:(NSDictionary *)paramters
+               finshedBlock:(FinishBlock)finshblock
+                 errorBlock:(ErrorBlock)errorblock;
+
+@end
+

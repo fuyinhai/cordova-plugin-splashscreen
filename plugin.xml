@@ -36,6 +36,15 @@
         <clobbers target="navigator.splashscreen" />
     </js-module>
 
+    <!-- 动态加载的 url   -->
+    <preference name="GUIDEPAGEINFOURL" />
+    <preference name="LOADPAGEINFOURL" />
+    
+    <!--  默认引导页 的图片配置  -->
+<!--    <preference name="IMAGEPATH" />-->
+    <preference name="GUIDEIMAGECOUNT" />
+
+
     <!-- android -->
     <platform name="android">
         <config-file target="res/xml/config.xml" parent="/*">
@@ -73,13 +82,38 @@
 			    <param name="onload" value="true"/>
 		    </feature>
         </config-file>
-
+        
         <header-file src="src/ios/CDVSplashScreen.h" />
         <source-file src="src/ios/CDVSplashScreen.m" />
         <header-file src="src/ios/CDVViewController+SplashScreen.h" />
         <source-file src="src/ios/CDVViewController+SplashScreen.m" />
 
 	    <framework src="CoreGraphics.framework" />
+        
+        <!--  加载页 和 引导页 url    -->
+        <preference name="LoadPageInfoUrl"       value="$LOADPAGEINFOURL" />
+        <preference name="guidePageInfoUrl"       value="$GUIDEPAGEINFOURL" />
+        
+        
+        <!--   默认引导页图片      -->
+        <preference name="guideImageCount"       value="$GUIDEIMAGECOUNT" />
+        
+        <resource-file src="src/ios/GuideImage/a-guide-480h.png" />
+        <resource-file src="src/ios/GuideImage/b-guide-480h.png" />
+        <resource-file src="src/ios/GuideImage/c-guide-480h.png" />
+        
+        <resource-file src="src/ios/GuideImage/a-guide-568h.png" />
+        <resource-file src="src/ios/GuideImage/b-guide-568h.png" />
+        <resource-file src="src/ios/GuideImage/c-guide-568h.png" />
+        
+        <resource-file src="src/ios/GuideImage/a-guide-667h.png" />
+        <resource-file src="src/ios/GuideImage/b-guide-667h.png" />
+        <resource-file src="src/ios/GuideImage/c-guide-667h.png" />
+        
+        <resource-file src="src/ios/GuideImage/a-guide-736h.png" />
+        <resource-file src="src/ios/GuideImage/b-guide-736h.png" />
+        <resource-file src="src/ios/GuideImage/c-guide-736h.png" />
+        
     </platform>
 
     <!-- blackberry10 -->

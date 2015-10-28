@@ -33,13 +33,15 @@ import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import android.R.bool;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -144,6 +146,14 @@ public class SplashScreen extends CordovaPlugin {
 		// it
 		// after Template.body.rendered
 		showSplashScreen(false);
+
+		ActivityInfo info;
+		try {
+			info = cordova.getActivity().getPackageManager().getActivityInfo(cordova.getActivity().getComponentName(), PackageManager.GET_META_DATA);
+			String requestUrl = info.applicationInfo.metaData.getString("REQUEST_URL");
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
 
 		saveImage(testSplash, true);
 
@@ -290,8 +300,8 @@ public class SplashScreen extends CordovaPlugin {
 										mGuideDialog = null;
 										mGuidePager = null;
 
-										 editor.putBoolean("isFirst", false);
-										 editor.commit();
+										editor.putBoolean("isFirst", false);
+										editor.commit();
 
 									}
 								});

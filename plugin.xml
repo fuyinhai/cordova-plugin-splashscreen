@@ -55,6 +55,11 @@
         </config-file>
 
         <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen" />
+
+        <source-file src="src/android/GuideImage/a_guide.png" target-dir="res/drawable" />
+        <source-file src="src/android/GuideImage/b_guide.png" target-dir="res/drawable" />
+        <source-file src="src/android/GuideImage/c_guide.png" target-dir="res/drawable" />
+
     </platform>
 
     <!-- amazon-fireos -->

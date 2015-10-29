@@ -37,13 +37,9 @@
         <clobbers target="navigator.splashscreen"/>
     </js-module>
 
-    <!-- 动态加载的 url   -->
-    <preference name="GUIDEPAGEINFOURL"/>
-    <preference name="LOADPAGEINFOURL"/>
 
-    <!--  默认引导页 的图片配置  -->
-    <!--    <preference name="IMAGEPATH" />-->
-    <preference name="GUIDEIMAGECOUNT"/>
+    <preference name="GUIDE_DEF_NUM"/>
+    <preference name="CONFIG_URL"/>
 
 
     <!-- android -->
@@ -58,9 +54,10 @@
         <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen"/>
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
-            <meta-data android:name="GUIDEPAGEINFOURL" android:value="$GUIDEPAGEINFOURL"/>
-            <meta-data android:name="LOADPAGEINFOURL" android:value="$LOADPAGEINFOURL"/>
-            <meta-data android:name="GUIDEIMAGECOUNT" android:value="VPREFIX_$GUIDEIMAGECOUNT"/>
+
+            <meta-data android:name="GUIDE_DEF_NUM" android:value="$GUIDE_DEF_NUM"/>
+            <meta-data android:name="CONFIG_URL" android:value="$CONFIG_URL"/>
+
         </config-file>
 
     </platform>
@@ -99,12 +96,12 @@
         <framework src="CoreGraphics.framework"/>
 
         <!--  加载页 和 引导页 url    -->
-        <preference name="LoadPageInfoUrl" value="$LOADPAGEINFOURL"/>
-        <preference name="guidePageInfoUrl" value="$GUIDEPAGEINFOURL"/>
+        <!--<preference name="LoadPageInfoUrl" value="$LOADPAGEINFOURL"/>-->
+        <!--<preference name="guidePageInfoUrl" value="$GUIDEPAGEINFOURL"/>-->
 
 
         <!--   默认引导页图片      -->
-        <preference name="guideImageCount" value="$GUIDEIMAGECOUNT"/>
+        <!--<preference name="guideImageCount" value="$GUIDEIMAGECOUNT"/>-->
 
         <resource-file src="src/ios/GuideImage/a-guide-480h.png"/>
         <resource-file src="src/ios/GuideImage/b-guide-480h.png"/>

@@ -292,9 +292,9 @@ public class SplashScreen extends CordovaPlugin {
 
 						} else {
 							testGuidePaths = new Object[3];
-							testGuidePaths[0] = cordova.getActivity().getResources().getIdentifier("a_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
-							testGuidePaths[1] = cordova.getActivity().getResources().getIdentifier("b_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
-							testGuidePaths[2] = cordova.getActivity().getResources().getIdentifier("c_guide", "drawable", cordova.getActivity().getClass().getPackage().getName());
+							testGuidePaths[0] = cordova.getActivity().getResources().getIdentifier("guide_1", "drawable", cordova.getActivity().getClass().getPackage().getName());
+							testGuidePaths[1] = cordova.getActivity().getResources().getIdentifier("guide_2", "drawable", cordova.getActivity().getClass().getPackage().getName());
+							testGuidePaths[2] = cordova.getActivity().getResources().getIdentifier("guide_3", "drawable", cordova.getActivity().getClass().getPackage().getName());
 
 						}
 

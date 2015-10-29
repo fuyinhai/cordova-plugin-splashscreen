@@ -57,10 +57,6 @@
 
         <source-file src="src/android/SplashScreen.java" target-dir="src/org/apache/cordova/splashscreen"/>
 
-        <source-file src="src/android/GuideImage/a_guide.png" target-dir="res/drawable"/>
-        <source-file src="src/android/GuideImage/b_guide.png" target-dir="res/drawable"/>
-        <source-file src="src/android/GuideImage/c_guide.png" target-dir="res/drawable"/>
-
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <meta-data android:name="GUIDEPAGEINFOURL" android:value="$GUIDEPAGEINFOURL"/>
             <meta-data android:name="LOADPAGEINFOURL" android:value="$LOADPAGEINFOURL"/>

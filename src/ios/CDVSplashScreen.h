@@ -45,25 +45,3 @@ typedef struct {
 
 @end
 
-
-
-
-
-#pragma mark 网络请求
-/***************************************************************************/
-typedef void (^FinishBlock)(NSData *dataDic);
-typedef void (^ErrorBlock)(NSString *dataString);
-
-@interface HttpResponse : NSObject<NSURLConnectionDataDelegate>
-
-@property (strong, nonatomic) NSMutableData *resultData;
-@property (strong, nonatomic) FinishBlock finishBlock;
-@property (strong, nonatomic) ErrorBlock errorBlock;
-
-+ (void)postRequestWithPath:(NSString *)path
-                  paramters:(NSDictionary *)paramters
-               finshedBlock:(FinishBlock)finshblock
-                 errorBlock:(ErrorBlock)errorblock;
-
-@end
-

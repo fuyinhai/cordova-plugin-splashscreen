@@ -95,29 +95,9 @@
 
         <framework src="CoreGraphics.framework"/>
 
-        <!--  加载页 和 引导页 url    -->
-        <!--<preference name="LoadPageInfoUrl" value="$LOADPAGEINFOURL"/>-->
-        <!--<preference name="guidePageInfoUrl" value="$GUIDEPAGEINFOURL"/>-->
-
-
-        <!--   默认引导页图片      -->
-        <!--<preference name="guideImageCount" value="$GUIDEIMAGECOUNT"/>-->
-
-        <resource-file src="src/ios/GuideImage/a-guide-480h.png"/>
-        <resource-file src="src/ios/GuideImage/b-guide-480h.png"/>
-        <resource-file src="src/ios/GuideImage/c-guide-480h.png"/>
-
-        <resource-file src="src/ios/GuideImage/a-guide-568h.png"/>
-        <resource-file src="src/ios/GuideImage/b-guide-568h.png"/>
-        <resource-file src="src/ios/GuideImage/c-guide-568h.png"/>
-
-        <resource-file src="src/ios/GuideImage/a-guide-667h.png"/>
-        <resource-file src="src/ios/GuideImage/b-guide-667h.png"/>
-        <resource-file src="src/ios/GuideImage/c-guide-667h.png"/>
-
-        <resource-file src="src/ios/GuideImage/a-guide-736h.png"/>
-        <resource-file src="src/ios/GuideImage/b-guide-736h.png"/>
-        <resource-file src="src/ios/GuideImage/c-guide-736h.png"/>
+        <!-- 默认引导页   和  域名    -->
+        <preference name="GUIDE_DEF_NUM" value="$GUIDE_DEF_NUM"/>
+        <preference name="CONFIG_URL" value="$CONFIG_URL"/>
 
     </platform>
 

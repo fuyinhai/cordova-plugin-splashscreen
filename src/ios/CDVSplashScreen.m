@@ -33,8 +33,8 @@
     
     [self setVisible:YES];
     
+    //
     [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"downLaunch"];
-    
     
     //第一次启动 默认引导页
     if([[NSUserDefaults standardUserDefaults] boolForKey:@"firstLaunch"] == NO)
@@ -68,8 +68,7 @@
         [self setVisible:NO];
     }
     
-    [self getGuideViewInfo];//获取引导页
-    [self getLoadPageInfo];//获取加载页
+    [self getConfigFile];//获取加载页
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
@@ -346,77 +345,120 @@
 }
 
 
-
-#pragma mark 动态变更启动 load 页面
-//获取 LoadPageInfo
--(void)getLoadPageInfo
+#pragma mark 获取配置参数 文件 guide_config.txt
+-(void)getConfigFile
 {
-    id loadPageInfoUrl = [self.commandDelegate.settings objectForKey:[@"LoadPageInfoUrl" lowercaseString]];
-    if (loadPageInfoUrl == nil) {
-        NSLog(@"LoadPageInfoUrl == nil");
+    //插件 参数CONFIG_URL 配置域名
+    id serverSetting = [self.commandDelegate.settings objectForKey:[@"CONFIG_URL" lowercaseString]];
+    if (serverSetting == nil) {
+        NSLog(@"server == nil");
         return;
     }
     
-    CGFloat viewH = [UIScreen mainScreen].bounds.size.height;
-    CGFloat viewW = [UIScreen mainScreen].bounds.size.width;
-    
-    NSDictionary *paramter = [[NSDictionary alloc] initWithObjects:@[[NSString stringWithFormat:@"%f",viewH],[NSString stringWithFormat:@"%f",viewW]] forKeys:@[@"height",@"width"]];
+    NSString *urlStr = [NSString stringWithFormat:@"%@",serverSetting];// @"http://192.168.5.249:3000";
+    NSString *path = [urlStr stringByAppendingString:@"/guide_config.txt"];
     
     
-    [HttpResponse postRequestWithPath:loadPageInfoUrl paramters:paramter finshedBlock:^(NSData *data){
+    NSURL *url = [NSURL URLWithString:path];
+    dispatch_queue_t queue =dispatch_queue_create("loadGuide_config",NULL);
+    dispatch_async(queue, ^{
         
-        NSError *error=nil;
-        NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
-        if (error)
-        {
-            NSLog(@"json 错误 %@",[error localizedDescription]);
-            return ;
-        }
+        NSData *resultData = [NSData dataWithContentsOfURL:url];
         
-        //数据错误
-        NSString *respCode=[NSString stringWithFormat:@"%@",[dic objectForKey:@"respCode"]];
-        if (![respCode isEqualToString:@"10020"])
-        {
-            NSLog(@"%@",[NSString stringWithFormat:@"%@",[dic objectForKey:@"respMsg"]]);
-            return;
-        }
-        
-        NSDictionary *jsonData = [dic objectForKey:@"data"];
-        
-        //比较版本
-        NSString *path =[NSString stringWithFormat:@"%@/LoadPageInfo",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]];
-        NSDictionary *oldData = [[NSDictionary alloc] initWithContentsOfFile:path];
-        
-        NSString *jsonDataVersion = [NSString stringWithFormat:@"%@",[jsonData objectForKey:@"Version"]];
-        NSString *oldDataVersion = [NSString stringWithFormat:@"%@",[oldData objectForKey:@"Version"]];
-        
-        if ([jsonDataVersion isEqualToString:oldDataVersion])
-            return;
-        
-        
-        //更新图片
-        NSString *loadImageUrl = [NSString stringWithFormat:@"%@",[jsonData objectForKey:@"loadImageUrl"]];
-        NSString *imageName = [self getImageName:[[UIApplication sharedApplication] statusBarOrientation] delegate:(id<CDVScreenOrientationDelegate>)self.viewController device:[self getCurrentDevice]];
-        
-        if ([imageName isEqualToString:@"Default-568h"])
-            imageName = @"Default-568h@2x~iphone";
-        
-        [self downLoadImage:loadImageUrl name:imageName path:nil];
-        
-    } errorBlock:^(NSString *error){
-        NSLog(@"%@",error);
-    }];
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            
+            if (resultData ==nil)
+                return ;
+            
+            NSError *error=nil;
+            NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:resultData options:kNilOptions error:&error];
+            if (error)
+            {
+                NSLog(@"json 错误 %@",[error localizedDescription]);
+                return ;
+            }
+            
+            NSLog(@"%@",dic);
+            
+            //            {
+            //                "我是注释":"",
+            //                "splashVersion":1,
+            //                "guideVersion":1,
+            //                "guideShowVersion":1,
+            //                "guideNum":3
+            //            }
+            
+            NSNumber *splashVersion = [dic objectForKey:@"splashVersion"];
+            NSInteger localSplashVersion = [[NSUserDefaults standardUserDefaults] integerForKey:@"splashVersion"];
+            if ([splashVersion integerValue] > localSplashVersion)
+            {
+                //跟新 启动页
+                [self splashUpdateImage:[splashVersion integerValue]];
+            }
+            
+            
+            
+            NSNumber *guideVersion = [dic objectForKey:@"guideVersion"];
+            NSInteger localGuideVersion= [[NSUserDefaults standardUserDefaults] integerForKey:@"guideVersion"];
+            if ([guideVersion integerValue] > localGuideVersion)
+            {
+                //更新 引导页图片
+                NSNumber *guideNum = [dic objectForKey:@"guideNum"];
+                [self guidePageUpdata:[guideVersion integerValue] guideNum:[guideNum integerValue]];
+            }
+            
+            
+            
+            NSNumber *guideShowVersion = [dic objectForKey:@"guideShowVersion"];
+            NSInteger localGuideShowVersion= [[NSUserDefaults standardUserDefaults] integerForKey:@"guideShowVersion"];
+            if ([guideShowVersion integerValue] > localGuideShowVersion)
+            {
+                //跟新  显示引导页 的版本号
+                [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"downLaunch"];
+                [[NSUserDefaults standardUserDefaults] setInteger:[guideShowVersion integerValue] forKey:@"guideShowVersion"];
+            }
+        });
+    });
 }
 
 
-//多线程下载图片
-- (void)downLoadImage:(NSString*)imageUrl name:(NSString*)imageName path:(NSString*)path
+// 跟新启动页的 图片
+-(void)splashUpdateImage:(NSInteger)Version
 {
-    NSString *imageUrlStr = nil;
-    if (imageUrl == nil)
-        imageUrlStr = @"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg";
-    else
-        imageUrlStr = imageUrl;
+    id serverSetting = [self.commandDelegate.settings objectForKey:[@"CONFIG_URL" lowercaseString]];
+    if (serverSetting == nil) {
+        NSLog(@"server == nil");
+        return;
+    }
+    
+    
+    CGFloat viewH = [UIScreen mainScreen].bounds.size.height;
+    NSString *imageName=@"Default";
+    NSString *imageAllName;
+    
+    if (viewH == 320)
+    {
+        imageAllName = [imageName stringByAppendingString:@"~iphone"];
+    }
+    else if (viewH == 480)
+    {
+        imageAllName = [imageName stringByAppendingString:@"@2x~iphone"];
+    }
+    else if(viewH == 568)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-568h@2x~iphone"];
+    }
+    else if (viewH == 667)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-667h"];
+    }
+    else if (viewH == 736)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-736h"];
+    }
+    
+    NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
+    NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/splash/%@.png",imageName]];
     
     
     NSURL *url = [NSURL URLWithString:imageUrlStr];
@@ -426,41 +468,111 @@
         NSData *resultData = [NSData dataWithContentsOfURL:url];
         
         dispatch_sync(dispatch_get_main_queue(), ^{
-            
-            if (path == nil)
+            if (resultData == nil)
             {
-                //更新照片  加载页
-                if ([imageName isEqualToString:@"Default"])
-                {
-                    NSString *imageAllNamePath2 = [[NSBundle mainBundle] pathForResource:@"Default@2x" ofType:@"png"];
-                    [resultData writeToFile:imageAllNamePath2 atomically:YES];
-                }
-                
-                NSString *imageAllNamePath = [[NSBundle mainBundle] pathForResource:imageName ofType:@"png"];
-                
-                NSData *imageData = [[NSData alloc] initWithContentsOfFile:imageAllNamePath];
-                if (imageData == nil)
-                {
-                    NSLog(@"没有找到 图片");
-                }
-                
-                BOOL isWrite = [resultData writeToFile:imageAllNamePath atomically:YES];
-                NSLog(@"%d",isWrite);
+                NSLog(@"更新 splashUpdateImage 图片失败！");
+                return ;
             }
-            else
-            {// 图片下载 引导页
-                NSString *imagePath = [path stringByAppendingString:imageName];
-                BOOL isWrite = [resultData writeToFile:imagePath atomically:YES];
-                NSLog(@"%d",isWrite);
+            
+            NSString *imageNamePath = [[NSBundle mainBundle] pathForResource:imageName ofType:@"png"];
+            NSData *imageData = [[NSData alloc] initWithContentsOfFile:imageNamePath];
+            if (imageData == nil)
+            {
+                NSLog(@"没有找到 图片");
+            }
+            
+            BOOL isWrite = [resultData writeToFile:imageNamePath atomically:YES];
+            if (isWrite)
+            {
+                [[NSUserDefaults standardUserDefaults] setInteger:Version forKey:@"splashVersion"];
+                NSLog(@"跟新成功");
             }
         });
     });
 }
 
+//更新 引导页 图片
+- (void)guidePageUpdata:(NSInteger)Version guideNum:(NSInteger)guideNum
+{
+    id serverSetting = [self.commandDelegate.settings objectForKey:[@"CONFIG_URL" lowercaseString]];
+    if (serverSetting == nil) {
+        NSLog(@"server == nil");
+        return;
+    }
+    
+    CGFloat viewH = [UIScreen mainScreen].bounds.size.height;
+    NSString *imageName=@"guide";
+    NSString *imageAllName;
+    
+    if (viewH == 480)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-480h"];
+    }
+    else if(viewH == 568)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-568h"];
+    }
+    else if (viewH == 667)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-667h"];
+    }
+    else if (viewH == 736)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-736h"];
+    }
+    
+    char count='a';
+    for (int i=0; i<guideNum; i++)
+    {
+        char countAt=count+i;
+        NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
+        
+        NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
+        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/guides/%@",imageViewName]];
+        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
+        
+        [self downLoadImage:imageUrlStr name:imageViewName path:path];
+    }
+    
+    [[NSUserDefaults standardUserDefaults] setInteger:Version forKey:@"guideVersion"];
+    [[NSUserDefaults standardUserDefaults] setInteger:guideNum forKey:@"guideNum"];
+}
+
+//多线程下载 引导页 图片
+- (void)downLoadImage:(NSString*)imageUrl name:(NSString*)imageName path:(NSString*)path
+{
+    if (imageUrl == nil || imageName == nil || path == nil)
+        return;
+    
+    NSURL *url = [NSURL URLWithString:imageUrl];
+    dispatch_queue_t queue =dispatch_queue_create("loadImage",NULL);
+    dispatch_async(queue, ^{
+        
+        NSData *resultData = [NSData dataWithContentsOfURL:url];
+        
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            if (resultData == nil)
+            {
+                NSLog(@"下载图片失败");
+                return ;
+            }
+            
+            // 图片下载 引导页
+            BOOL isWrite = [resultData writeToFile:path atomically:YES];
+            if (isWrite)
+            {
+                NSLog(@"写入结果 %d",isWrite);
+            }
+        });
+    });
+}
+
+
 #pragma mark 默认 引导页
 - (void)showGuidepage
 {
-    id pagesCount = [self.commandDelegate.settings objectForKey:[@"guideImageCount" lowercaseString]];
+    //插件参数配置的 默认启动页数目
+    id pagesCount = [self.commandDelegate.settings objectForKey:[@"GUIDE_DEF_NUM" lowercaseString]];
     if (pagesCount == nil || [pagesCount integerValue] ==0)
         return;
     
@@ -563,74 +675,16 @@
     return YES;
 }
 
-
-
-
-#pragma mark 动态配置引导页
-//获取 guideInfo 引导页 信息
--(void)getGuideViewInfo
-{
-    id guideInfoUrl = [self.commandDelegate.settings objectForKey:[@"guidePageInfoUrl" lowercaseString]];
-    if (guideInfoUrl == nil) {
-        NSLog(@"guidePageInfoUrl == nil");
-        return;
-    }
-    
-    CGFloat viewW = [UIScreen mainScreen].bounds.size.width;
-    CGFloat viewH = [UIScreen mainScreen].bounds.size.height;
-    NSDictionary *paramter = [[NSDictionary alloc] initWithObjects:@[[NSString stringWithFormat:@"%f",viewH],[NSString stringWithFormat:@"%f",viewW]] forKeys:@[@"height",@"width"]];
-    
-    [HttpResponse postRequestWithPath:guideInfoUrl paramters:paramter finshedBlock:^(NSData *data){
-        NSError *error=nil;
-        NSDictionary *dic = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
-        if (error)
-        {
-            NSLog(@"json 错误 %@",[error localizedDescription]);
-            return ;
-        }
-        
-        //数据错误
-        NSString *respCode=[NSString stringWithFormat:@"%@",[dic objectForKey:@"respCode"]];
-        if (![respCode isEqualToString:@""])
-        {
-            NSLog(@"%@",[NSString stringWithFormat:@"%@",[dic objectForKey:@"respMsg"]]);
-            return;
-        }
-        
-        NSDictionary *guideInfo = [dic objectForKey:@"data"];
-        
-        
-        //比较版本
-        NSString *path =[NSString stringWithFormat:@"%@/GuidePageInfo",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]];
-        NSDictionary *oldData = [[NSDictionary alloc] initWithContentsOfFile:path];
-        
-        NSString *jsonDataVersion = [NSString stringWithFormat:@"%@",[guideInfo objectForKey:@"Version"]];
-        NSString *oldDataVersion = [NSString stringWithFormat:@"%@",[oldData objectForKey:@"Version"]];
-        
-        if ([jsonDataVersion isEqualToString:oldDataVersion])
-            return;
-        
-        
-        //更新 文件
-        [guideInfo writeToFile:path atomically:YES];
-        
-        //跟新 图片
-        NSArray *imageArray = [guideInfo objectForKey:@"imageArray"];
-        [self loadImageArray:imageArray];
-        
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"downLaunch"];
-        
-    } errorBlock:^(NSString *error){
-        NSLog(@"%@",error);
-    }];
-}
-
-
+#pragma mark 显示经过动态配置的 引导页
 - (void)showDowloadGuideInfo
 {
-    NSString *path =[NSString stringWithFormat:@"%@/GuidePageInfo",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]];
-    NSDictionary *guideInfo = [[NSDictionary alloc] initWithContentsOfFile:path];
-    NSInteger pages = [[NSString stringWithFormat:@"%@",[guideInfo objectForKey:@"pages"]] integerValue];
+    NSInteger pages = [[NSUserDefaults standardUserDefaults] integerForKey:@"guideNum"];
+    
+    id serverSetting = [self.commandDelegate.settings objectForKey:[@"CONFIG_URL" lowercaseString]];
+    if (serverSetting == nil) {
+        NSLog(@"server == nil");
+        return;
+    }
     
     CGFloat viewW = [UIScreen mainScreen].bounds.size.width;
     CGFloat viewH = [UIScreen mainScreen].bounds.size.height;
@@ -641,198 +695,87 @@
     _guideView.showsHorizontalScrollIndicator = NO;
     _guideView.showsVerticalScrollIndicator = NO;
     _guideView.pagingEnabled = YES;
-    //    _guideView.delegate = self;
     [_guideView setContentSize:CGSizeMake(viewW*pages, viewH)];
     
-    NSArray *imageArray = [guideInfo objectForKey:@"imageArray"];
-    NSString *pathPhoto = [NSString stringWithFormat:@"%@/",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]];
-    
     //检测图片是否下载
-    for (NSDictionary *dic in imageArray)
+    NSString *imageName=@"guide";
+    NSString *imageAllName;
+    
+    if (viewH == 480)
     {
-        NSString *name = [NSString stringWithFormat:@"%@",[dic objectForKey:@"name"]];
-        NSString *imagePath = [pathPhoto stringByAppendingString:[NSString stringWithFormat:@"%@.png",name]];
+        imageAllName = [imageName stringByAppendingString:@"-480h"];
+    }
+    else if(viewH == 568)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-568h"];
+    }
+    else if (viewH == 667)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-667h"];
+    }
+    else if (viewH == 736)
+    {
+        imageAllName = [imageName stringByAppendingString:@"-736h"];
+    }
+    
+    char count='a';
+    BOOL isDown=YES;
+    for (int i=0; i<pages; i++)
+    {
+        char countAt=count+i;
+        NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
         
-        UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+        NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
+        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/guides/%@",imageViewName]];
+        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
+        
+        UIImage *image = [UIImage imageWithContentsOfFile:path];
         if (image == nil)
         {
-            [self loadImageArray:imageArray];
-            [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"downLaunch"];
-            
-            return;
+            [self downLoadImage:imageUrlStr name:imageViewName path:path];
+            isDown = NO;
         }
     }
     
+    if (isDown == NO)
+        return;
     
+    
+    char imageCount='a';
     for (int i=0; i<pages; i++)
     {
-        NSDictionary *dic = [imageArray objectAtIndex:i];
-        NSString *name = [NSString stringWithFormat:@"%@",[dic objectForKey:@"name"]];
+        char countAt=imageCount+i;
+        NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
+        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
         
-        NSString *imagePath = [pathPhoto stringByAppendingString:[NSString stringWithFormat:@"%@.png",name]];
         UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(i*viewW,0, viewW,viewH)];
         imageView.userInteractionEnabled = YES;
-        UIImage *image = [UIImage imageNamed:imagePath];
-        
+        UIImage *image = [UIImage imageWithContentsOfFile:path];
         if (image == nil)
         {
-            NSLog(@"加载 图片失败 %@",imagePath);
+            NSLog(@"加载 图片失败 %@",path);
             return;
         }
         
         //
         imageView.image = image;
-        [_guideView addSubview:imageView];
         
         //最后一张图片 加上btn
         if (i == pages-1)
         {
-            UIButton* button  = [UIButton buttonWithType:UIButtonTypeCustom];
-            button.frame = CGRectMake(25., viewH*4./5., viewW-50., 50.);
-            button.backgroundColor = [UIColor colorWithRed:45/255.f green:168/255.f blue:225/255.f alpha:1];
-            [button setTitle:NSLocalizedString(@"立即使用",nil) forState:UIControlStateNormal];
-            [button addTarget:self action:@selector(startUseApp) forControlEvents:UIControlEventTouchUpInside];//UIControlEventTouchUpInside
-            [imageView addSubview:button];
-            [self.viewController.view addSubview:_guideView];
+            UISwipeGestureRecognizer* swipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleSwipeGesture:)];
+            [swipeGesture setDirection:UISwipeGestureRecognizerDirectionLeft];
+            swipeGesture.delegate = self;
+            [imageView addGestureRecognizer:swipeGesture];
         }
-    }
-}
-
-- (void)loadImageArray:(NSArray*)imageArray
-{
-    for (NSDictionary *dic in imageArray)
-    {
-        NSString *imageName = [NSString stringWithFormat:@"%@",[dic objectForKey:@"imageName"]];
-        NSString *imageUrl = [NSString stringWithFormat:@"%@",[dic objectForKey:@"imageUrl"]];
-        NSString *path = [NSString stringWithFormat:@"%@/",[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0]];
         
-        [self downLoadImage:imageUrl name:imageName path:path];
+        [_guideView addSubview:imageView];
     }
+    
+    [self.viewController.view addSubview:_guideView];
 }
 
 @end
-
-
-
-
-
-
-#pragma mark  网络获取接口
-@implementation HttpResponse
-
-+ (void)postRequestWithPath:(NSString *)path
-                  paramters:(NSDictionary *)paramters
-               finshedBlock:(FinishBlock)finshblock
-                 errorBlock:(ErrorBlock)errorblock
-{
-    HttpResponse *httpRequest = [[HttpResponse alloc]init];
-    httpRequest.finishBlock = finshblock;
-    httpRequest.errorBlock = errorblock;
-    
-    
-    NSString *urlStr = [@"" stringByAppendingString:path];
-    NSString *urlStradd = [urlStr stringByAppendingString:[HttpResponse parseParams:paramters]];
-    NSLog(@"%@",urlStradd);
-    
-    NSURL *url = [NSURL URLWithString:[urlStradd stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
-    NSMutableURLRequest *requset = [[NSMutableURLRequest alloc]initWithURL:url cachePolicy:NSURLRequestReloadIgnoringCacheData timeoutInterval:30];
-    
-    
-    [requset setHTTPMethod:@"POST"];
-    [requset setValue:@"application/json" forHTTPHeaderField:@"Accept"];
-    [requset setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
-    
-    
-    NSURLConnection *connection = [[NSURLConnection alloc]initWithRequest:requset delegate:httpRequest];
-    [connection start];
-    NSLog(connection ? @"连接创建成功" : @"连接创建失败");
-    
-    
-    //    NSString *urlString = @"https://www.baidu.com/img/bdlogo.png";
-}
-
-
-/**
- *  接收到服务器回应的时回调
- */
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response
-{
-    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *)response;
-    if (!self.resultData)
-    {
-        self.resultData = [[NSMutableData alloc]init];
-    }
-    else
-    {
-        [self.resultData setLength:0];
-    }
-    
-    if ([response respondsToSelector:@selector(allHeaderFields)]) {
-        NSDictionary *dic = [httpResponse allHeaderFields];
-        NSLog(@"[network]allHeaderFields:%@",[dic description]);
-    }
-}
-
-
-/**
- *  接收到服务器传输数据的时候调用，此方法根据数据大小执行若干次
- */
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data
-{
-    [self.resultData appendData:data];
-}
-
-
-/**
- *  数据传完之后调用此方法
- */
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection
-{
-    if (self.resultData != nil)
-    {
-        if (self.finishBlock)
-            self.finishBlock(self.resultData);
-    }
-    else
-    {
-        if (self.errorBlock)
-            self.errorBlock(@"resultData = nil ");
-    }
-}
-
-
-/**
- *  网络请求过程中，出现任何错误（断网，连接超时等）会进入此方法
- */
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error
-{
-    NSLog(@"network error : %@", [error localizedDescription]);
-    
-    if (self.errorBlock)
-    {
-        self.errorBlock([error localizedDescription]);
-    }
-}
-
-//拼接参数
-+ (NSString *)parseParams:(NSDictionary *)params
-{
-    NSString *keyValueFormat;
-    NSMutableString *result = [[NSMutableString alloc] init];
-    //实例化一个key枚举器用来存放dictionary的key
-    NSEnumerator *keyEnum = [params keyEnumerator];
-    id key;
-    while (key = [keyEnum nextObject])
-    {
-        keyValueFormat = [NSString stringWithFormat:@"%@=%@&",key,[params valueForKey:key]];
-        [result appendString:keyValueFormat];
-        //NSLog(@"post()方法参数解析结果：%@",result);
-    }
-    return result;
-}
-
-@end
-
 
 
 

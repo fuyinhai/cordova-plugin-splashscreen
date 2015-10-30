@@ -134,85 +134,39 @@ screen visible for app startup.
 
 
 
-##  加载页 动态配置  
-######动态设置 加载页 URL
- \<preference name="LoadPageInfoUrl"       value="$LOADPAGEINFOURL"/> 
-
-例:</br>
- http://www.yunbaopu.com
-
-接受参数<br>
-http://www.yunbaopu.com?height=667&width=375
-
-返回  'json'数据<br>
-
+##  默认引导页数目和域名配置 参数
 ```
-{
-    "data": {
-        "version": "2",
-        "imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/       oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg",
-    },
-     "respCode": "100200",
-    "respMsg": "成功"
-}
+	<preference name="GUIDE_DEF_NUM"/>
+    <preference name="CONFIG_URL"/>
+    
 ```
 
 
 
+## 动态加载 引导页和配置 加载页的 配置文件
+```
+			地址：	CONFIG_URL/guide_config.txt
 
-##  引导页 动态配置 
-动态设置 引导页 URL
-\<preference name="guidePageInfoUrl"       value="$GUIDEPAGEINFOURL" />
-
-例:</br>
-http://www.yunbaopu.com
-
-
-插件接受参数生成的请求 URL</br>
-http://www.yunbaopu.com?height=667&width=375
-
-
-返回  json数据
+            {
+                "我是注释":"",
+                "splashVersion":1,
+                "guideVersion":1,
+                "guideShowVersion":1,
+                "guideNum":3
+            }    
+```
+动态配置的 图片命名规则为 加载页和默认 meteor默认配置一致，引导页 命名如下
 
 ```
-{
-    "data": {
-        "version": "1",
-        "guideimageCount":"3",
-        "imageArray":[
-            {"imageName":"a.png","imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg"},
-            {"imageName":"b.png","imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg"},
-            {"imageName":"c.png","imageUrl":"http://i5.download.fd.pchome.net/t_600x1024/g1/M00/0A/1B/oYYBAFP24pSIW6XtAATAWwYPjvkAAB3owHl2ywABMBz933.jpg"},
-        ],
-    },
-    "respCode": "100200",
-    "respMsg": "成功"
-}
+	a-guide-480h.png
+    b-guide-480h.png
+    c-guide-480h.png
+    
+    a-guide-568h.png
+    b-guide-568h.png
+    c-guide-568h.png
+    
 ```
 
-
-
-## 默认3张 引导页 数
-\<preference name="GUIDEIMAGECOUNT" />
-
-引导页图片 添加命名的字母前缀.<br>
-
-```
-    <resource-file src="src/ios/GuideImage/a-guide-480h.png" />
-    <resource-file src="src/ios/GuideImage/b-guide-480h.png" />
-    <resource-file src="src/ios/GuideImage/c-guide-480h.png" />
-
-    <resource-file src="src/ios/GuideImage/a-guide-568h.png" />
-    <resource-file src="src/ios/GuideImage/b-guide-568h.png" />
-    <resource-file src="src/ios/GuideImage/c-guide-568h.png" />
-
-    <resource-file src="src/ios/GuideImage/a-guide-667h.png" />
-    <resource-file src="src/ios/GuideImage/b-guide-667h.png" />
-    <resource-file src="src/ios/GuideImage/c-guide-667h.png" />
-
-    <resource-file src="src/ios/GuideImage/a-guide-736h.png" />
-    <resource-file src="src/ios/GuideImage/b-guide-736h.png" />
-    <resource-file src="src/ios/GuideImage/c-guide-736h.png" />
-```
 
 

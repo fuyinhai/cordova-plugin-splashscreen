@@ -34,17 +34,23 @@
     [self setVisible:YES];
     
     //
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"downLaunch"];
     
     //第一次启动 默认引导页
     if([[NSUserDefaults standardUserDefaults] boolForKey:@"firstLaunch"] == NO)
     {
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"firstLaunch"];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"downLaunch"];
+        
+        
+        //动态配置
+        [[NSUserDefaults standardUserDefaults]  setInteger:1 forKey:@"splashVersion"];
+        [[NSUserDefaults standardUserDefaults]  setInteger:1 forKey:@"guideVersion"];
+        [[NSUserDefaults standardUserDefaults]  setInteger:1 forKey:@"guideShowVersion"];
+        
         [self showGuidepage];
     }
     else if([[NSUserDefaults standardUserDefaults] boolForKey:@"downLaunch"] == NO)
     {//启用 动态加载的 引导页
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"downLaunch"];
         [self showDowloadGuideInfo];
     }
 }
@@ -68,7 +74,16 @@
         [self setVisible:NO];
     }
     
-    [self getConfigFile];//获取加载页
+    static NSInteger count = 0;
+    if (count == 0)
+    {
+        count ++;
+        [self getConfigFile];
+        //        [self splashUpdateImage:1];
+        //        [self guidePageUpdata:1 guideNum:3];
+    }
+    
+    //    [self getConfigFile];//获取加载页
 }
 
 - (void)observeValueForKeyPath:(NSString*)keyPath ofObject:(id)object change:(NSDictionary*)change context:(void*)context
@@ -356,7 +371,7 @@
     }
     
     NSString *urlStr = [NSString stringWithFormat:@"%@",serverSetting];// @"http://192.168.5.249:3000";
-    NSString *path = [urlStr stringByAppendingString:@"/guide_config.txt"];
+    NSString *path = [urlStr stringByAppendingString:@"guide_config.txt"];
     
     
     NSURL *url = [NSURL URLWithString:path];
@@ -458,9 +473,10 @@
     }
     
     NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
-    NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/splash/%@.png",imageName]];
+    NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"splash/%@.png",imageAllName]];
     
     
+    imageUrlStr = @"https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png";
     NSURL *url = [NSURL URLWithString:imageUrlStr];
     dispatch_queue_t queue =dispatch_queue_create("loadImage",NULL);
     dispatch_async(queue, ^{
@@ -474,8 +490,8 @@
                 return ;
             }
             
-            NSString *imageNamePath = [[NSBundle mainBundle] pathForResource:imageName ofType:@"png"];
-            NSData *imageData = [[NSData alloc] initWithContentsOfFile:imageNamePath];
+            NSString *imageNamePath = [[NSBundle mainBundle] pathForResource:imageAllName ofType:@"png"];
+            NSData *imageData = [[NSData alloc]initWithContentsOfFile:imageNamePath];
             if (imageData == nil)
             {
                 NSLog(@"没有找到 图片");
@@ -487,6 +503,14 @@
                 [[NSUserDefaults standardUserDefaults] setInteger:Version forKey:@"splashVersion"];
                 NSLog(@"跟新成功");
             }
+            
+            NSError *error;
+            [resultData writeToFile:imageNamePath options:NSDataWritingAtomic error:&error];
+            if (error) {
+                NSLog(@"%@",[error localizedDescription]);
+            }
+            
+            
         });
     });
 }
@@ -528,8 +552,8 @@
         NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
         
         NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
-        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/guides/%@",imageViewName]];
-        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
+        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"guides/%@",imageViewName]];
+        NSString *path =[NSString stringWithFormat:@"%@/%@.png",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
         
         [self downLoadImage:imageUrlStr name:imageViewName path:path];
     }
@@ -544,6 +568,7 @@
     if (imageUrl == nil || imageName == nil || path == nil)
         return;
     
+    //    imageUrl = @"https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png";
     NSURL *url = [NSURL URLWithString:imageUrl];
     dispatch_queue_t queue =dispatch_queue_create("loadImage",NULL);
     dispatch_async(queue, ^{
@@ -557,12 +582,14 @@
                 return ;
             }
             
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            if (![fileManager fileExistsAtPath:path]) {
+                [fileManager createFileAtPath:path contents:nil attributes:nil];
+            }
+            
             // 图片下载 引导页
             BOOL isWrite = [resultData writeToFile:path atomically:YES];
-            if (isWrite)
-            {
-                NSLog(@"写入结果 %d",isWrite);
-            }
+            NSLog(@"写入结果 %d",isWrite);
         });
     });
 }
@@ -726,8 +753,8 @@
         NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
         
         NSString *server = [NSString stringWithFormat:@"%@",serverSetting];
-        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"/guides/%@",imageViewName]];
-        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
+        NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"guides/%@.png",imageViewName]];
+        NSString *path =[NSString stringWithFormat:@"%@/%@.png",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
         
         UIImage *image = [UIImage imageWithContentsOfFile:path];
         if (image == nil)
@@ -746,7 +773,7 @@
     {
         char countAt=imageCount+i;
         NSString *imageViewName=[[NSString stringWithFormat:@"%c-",countAt] stringByAppendingString:imageAllName];
-        NSString *path =[NSString stringWithFormat:@"%@/GuidePagePhoto/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
+        NSString *path =[NSString stringWithFormat:@"%@/%@",[ NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0],imageViewName];
         
         UIImageView *imageView = [[UIImageView alloc] initWithFrame:CGRectMake(i*viewW,0, viewW,viewH)];
         imageView.userInteractionEnabled = YES;
@@ -773,6 +800,7 @@
     }
     
     [self.viewController.view addSubview:_guideView];
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"downLaunch"];
 }
 
 @end

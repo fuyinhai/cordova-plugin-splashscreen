@@ -152,15 +152,26 @@
 {
     [(CDVViewController *)self.viewController setEnabledAutorotation:[(CDVViewController *)self.viewController shouldAutorotateDefaultValue]];
     
-    [_imageView removeFromSuperview];
-    [_activityView removeFromSuperview];
-    _imageView = nil;
-    _activityView = nil;
-    _curImageName = nil;
+    _imageView.alpha = 1.0;
+    _activityView.alpha = 1.0;
+    [UIView animateWithDuration:1.5 animations:^{
+        _imageView.alpha = 0.0;
+        _activityView.alpha = 0.0;
+        
+    } completion:^(BOOL isfindsh){
+        
+        [_imageView removeFromSuperview];
+        [_activityView removeFromSuperview];
+        _imageView = nil;
+        _activityView = nil;
+        _curImageName = nil;
+        
+        self.viewController.view.userInteractionEnabled = YES;  // re-enable user interaction upon completion
+        [self.viewController.view removeObserver:self forKeyPath:@"frame"];
+        [self.viewController.view removeObserver:self forKeyPath:@"bounds"];
+    }];
     
-    self.viewController.view.userInteractionEnabled = YES;  // re-enable user interaction upon completion
-    [self.viewController.view removeObserver:self forKeyPath:@"frame"];
-    [self.viewController.view removeObserver:self forKeyPath:@"bounds"];
+    
 }
 
 - (CDV_iOSDevice) getCurrentDevice
@@ -476,7 +487,6 @@
     NSString *imageUrlStr  = [server stringByAppendingString:[NSString stringWithFormat:@"splash/%@.png",imageAllName]];
     
     
-    imageUrlStr = @"https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/bd_logo1_31bdc765.png";
     NSURL *url = [NSURL URLWithString:imageUrlStr];
     dispatch_queue_t queue =dispatch_queue_create("loadImage",NULL);
     dispatch_async(queue, ^{
@@ -686,7 +696,21 @@
 
 -(void)startUseApp
 {
-    [_guideView removeFromSuperview];
+    _guideView.alpha = 1.0;
+    CGRect rect = [[UIScreen mainScreen] bounds];
+    //    _guideView.center = CGPointMake(rect.size.width/2, rect.size.height/2);
+    
+    [UIView animateWithDuration:1.5 animations:^{
+        _guideView.alpha = 0.1;
+        //        _guideView.center = CGPointMake(-rect.size.width/2, -rect.size.height/2);
+        
+    } completion:^(BOOL isfindsh){
+        if (isfindsh == true)
+            [_guideView removeFromSuperview];
+    }];
+    
+    
+    
 }
 
 

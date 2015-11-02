@@ -145,15 +145,23 @@ screen visible for app startup.
 
 ## 动态加载 引导页和配置 加载页的 配置文件
 ```
-			地址：	CONFIG_URL/guide_config.txt
+            1). 启动页与引导页配置文件存放位置及命名
+                项目目录/public/guide_config.txt
 
-            {
-                "我是注释":"",
-                "splashVersion":1,
-                "guideVersion":1,
-                "guideShowVersion":1,
-                "guideNum":3
-            }    
+            2). guide_config.txt 内容说明
+                {
+                    "我是注释":"splashVersion启动页版本号，发布时默认为0，有更换需求时递增；guideVersion引导页版本号，发布时默认为0，有更换需求时递增；guideNum引导页页数，对应修改为新引导页页数；guideShowVersion引导页是否显示版本号，发布时默认为0，有需要显示新引导页时递增；",
+                    "splashVersion":0,
+                    "guideVersion":0,
+                    "guideShowVersion":0,
+                    "guideNum":0
+                }
+                splashVersion启动页版本号，有更换需求时递增；
+                guideVersion引导页版本号，有更换需求时递增；
+                guideNum引导页页数，对应修改为新引导页页数；
+                guideShowVersion引导页是否显示版本号，有需要显示新引导页时递增；
+                注：1). 修改引导页时，记得同时修改引导页页数;
+                    2). 。
 ```
 动态配置的 图片命名规则为 加载页和默认 meteor默认配置一致，引导页 命名如下
 
@@ -165,6 +173,16 @@ screen visible for app startup.
     a-guide-568h.png
     b-guide-568h.png
     c-guide-568h.png
+
+    android端启动页图片存放位置及命名规则：
+    项目目录/public/splash/splash.png
+
+    android端启动页图片存放位置及命名规则：
+    项目目录/public/guides/guide_1.png
+    项目目录/public/guides/guide_2.png
+    项目目录/public/guides/guide_3.png
+    启动页多张时，图片名字后缀数字递增。
+
     
 ```
 

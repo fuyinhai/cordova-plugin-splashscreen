@@ -89,36 +89,44 @@ public class SplashScreen extends CordovaPlugin {
 	/*** 图片文件储存位置 */
 	private String savePath = Environment.getExternalStorageDirectory().getPath() + "/box/";
 
-	private Object[] testGuidePaths;
-
 	private SharedPreferences boxPreferences;
 	private Editor editor;
 
 	private Dialog mGuideDialog; // 引导页面显示容器
 	private List<View> mGuideViews; // 引导页内容list
 	private ViewPager mGuidePager; // 引导页面控制控件
+	private Object[] mGuidePaths;// 引导页图片储存容器
 
+	// 第一次加载标识
+	private final String IS_FIRST = "IS_FIRST";
+	private Boolean mIsFirst;
+
+	// 启动页与引导页配置文件url
 	private final String CONFIG_URL = "CONFIG_URL";
-	private final String GUIDE_DEF_NUM = "GUIDE_DEF_NUM";
-
 	private String mConfigUrl;
+
+	// 默认引导页页数
+	private final String GUIDE_DEF_NUM = "GUIDE_DEF_NUM";
 	private int mGuideDefNum;
 
-	private final String IS_FIRST = "IS_FIRST";
-	private final String LOC_VERSION = "LOC_VERSION";
-	private Boolean mIsFirst;
-	private int mLocVersion;
+	// 启动页版本号
+	private final String SPLASH_VERSION = "SPLASH_VERSION";
+	private int msplashVersion;
 
-	private final String SPLASH_UPDATE = "SPLASH_UPDATE";
+	// 引导页版本号
 	private final String GUIDE_VERSION = "GUIDE_VERSION";
-	private final String GUIDE_UPDATE = "GUIDE_UPDATE";
-	private final String GUIDE_SHOW = "GUIDE_SHOW";
-	private final String GUIDE_NUM = "GUIDE_NUM";
+	private int mguideVersion;
 
-	private int mGuideVersion;
-	private boolean mSplashUpdate;
-	private Boolean mGuideUpdate;
+	// 引导页显示版本
+	private final String GUIDE_SHOW_VERSION = "GUIDE_SHOW_VERSION";
+	private int mguideShowVersion;
+
+	// 引导页是否显示标识
+	private final String GUIDE_SHOW = "GUIDE_SHOW";
 	private Boolean mGuideShow;
+
+	// 引导页页数
+	private final String GUIDE_NUM = "GUIDE_NUM";
 	private int mGuideNum;
 
 	// Helper to be compile-time compatible with both Cordova 3.x and 4.x.
@@ -149,13 +157,16 @@ public class SplashScreen extends CordovaPlugin {
 		editor = boxPreferences.edit();
 
 		mIsFirst = boxPreferences.getBoolean(IS_FIRST, true);
-		mLocVersion = boxPreferences.getInt(LOC_VERSION, 1);
 
-		mGuideVersion = boxPreferences.getInt(GUIDE_VERSION, 1);
-		mSplashUpdate = boxPreferences.getBoolean(SPLASH_UPDATE, false);
-		mGuideUpdate = boxPreferences.getBoolean(GUIDE_UPDATE, false);
+		msplashVersion = boxPreferences.getInt(SPLASH_VERSION, 0);
+
+		mguideVersion = boxPreferences.getInt(GUIDE_VERSION, 0);
+
+		mguideShowVersion = boxPreferences.getInt(GUIDE_SHOW_VERSION, 0);
+
 		mGuideShow = boxPreferences.getBoolean(GUIDE_SHOW, false);
-		mGuideNum = mIsFirst ? mGuideDefNum : boxPreferences.getInt(GUIDE_NUM, 0);
+
+		mGuideNum = boxPreferences.getInt(GUIDE_NUM, mGuideDefNum);
 
 		if (HAS_BUILT_IN_SPLASH_SCREEN || !firstShow) {
 			return;
@@ -306,25 +317,25 @@ public class SplashScreen extends CordovaPlugin {
 						ImageView imageView;
 						String filePath;
 
-						testGuidePaths = new Object[mGuideNum];
+						mGuidePaths = new Object[mGuideNum];
 
-						for (int i = 0; i < testGuidePaths.length; i++) {
+						for (int i = 0; i < mGuidePaths.length; i++) {
 
 							imageView = new ImageView(context);
 
 							if (mIsFirst) {
-								testGuidePaths[i] = cordova.getActivity().getResources().getIdentifier("guide_" + (i + 1), "drawable", cordova.getActivity().getClass().getPackage().getName());
-								imageView.setImageResource((Integer) testGuidePaths[i]);
+								mGuidePaths[i] = cordova.getActivity().getResources().getIdentifier("guide_" + (i + 1), "drawable", cordova.getActivity().getClass().getPackage().getName());
+								imageView.setImageResource((Integer) mGuidePaths[i]);
 							} else {
-								testGuidePaths[i] = "guide_" + (i + 1) + ".png";
-								filePath = savePath + testGuidePaths[i];
+								mGuidePaths[i] = "guide_" + (i + 1) + ".png";
+								filePath = savePath + mGuidePaths[i];
 								imageView.setImageBitmap(BitmapFactory.decodeFile(filePath));
 							}
 
 							imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 							imageView.setLayoutParams(layoutParams);
 
-							if (i == testGuidePaths.length - 1) {
+							if (i == mGuidePaths.length - 1) {
 
 								imageView.setOnClickListener(new OnClickListener() {
 
@@ -334,24 +345,20 @@ public class SplashScreen extends CordovaPlugin {
 										mGuideDialog.dismiss();
 										mGuideDialog = null;
 										mGuidePager = null;
+										mGuideViews = null;
 
 										splashDialog.dismiss();
 										splashDialog = null;
 										splashImageView = null;
 
-										if (mIsFirst) {
-											editor.putBoolean(IS_FIRST, false);
-										} else {
-											editor.putInt(LOC_VERSION, mGuideVersion);
-											editor.putBoolean(GUIDE_SHOW, false);
-										}
+										editor.putBoolean(mIsFirst ? IS_FIRST : GUIDE_SHOW, false);
 										editor.commit();
 
 									}
 								});
 							}
 							mGuideViews.add(imageView);
-
+							imageView = null;
 						}
 
 						mGuidePager.setAdapter(new guideAdapter());
@@ -638,17 +645,23 @@ public class SplashScreen extends CordovaPlugin {
 
 						JSONObject jsonObject = new JSONObject(json);
 
+						editor.putInt(SPLASH_VERSION, jsonObject.getInt("splashVersion"));
 						editor.putInt(GUIDE_VERSION, jsonObject.getInt("guideVersion"));
-						editor.putBoolean(SPLASH_UPDATE, jsonObject.getBoolean("splashUpdate"));
-						editor.putBoolean(GUIDE_UPDATE, jsonObject.getBoolean("guideUpdate"));
-						if (mLocVersion != mGuideVersion) {
-							editor.putBoolean(GUIDE_SHOW, jsonObject.getBoolean("guideShow"));
-						}
 						editor.putInt(GUIDE_NUM, jsonObject.getInt("guideNum"));
+						editor.putInt(GUIDE_SHOW_VERSION, jsonObject.getInt("guideShowVersion"));
 						editor.commit();
 
-						saveSplashImage();
-						saveGuideImagse();
+						if (jsonObject.getInt("splashVersion") > msplashVersion) {
+							saveSplashImage();
+						}
+
+						if (jsonObject.getInt("guideVersion") > mguideVersion) {
+							saveGuideImagse(jsonObject.getInt("guideNum"));
+						}
+
+						if (jsonObject.getInt("guideShowVersion") > mguideShowVersion) {
+							mGuideShow = true;
+						}
 
 					}
 				} catch (Exception e) {
@@ -664,10 +677,13 @@ public class SplashScreen extends CordovaPlugin {
 	 */
 	private void saveSplashImage() {
 
-		if (mSplashUpdate) {
-			saveImage(mConfigUrl + "splash/splash.png");
+		File file = new File(savePath + "splash.png");
+		if (file.exists()) {
+			file.delete();
+			file = null;
 		}
 
+		saveImage(mConfigUrl + "splash/splash.png");
 	}
 
 	/**
@@ -688,12 +704,17 @@ public class SplashScreen extends CordovaPlugin {
 	/**
 	 * 储存引导页至本地
 	 */
-	private void saveGuideImagse() {
+	private void saveGuideImagse(int num) {
+		File file;
+		for (int i = 0; i < num; i++) {
 
-		if (mGuideUpdate && (mLocVersion != mGuideVersion)) {
-			for (int i = 0; i < mGuideDefNum; i++) {
-				saveImage(mConfigUrl + "guides/guide_" + (i + 1) + ".png");
+			file = new File(mConfigUrl + "guides/guide_" + (i + 1) + ".png");
+			if (file.exists()) {
+				file.delete();
+				file = null;
 			}
+
+			saveImage(mConfigUrl + "guides/guide_" + (i + 1) + ".png");
 		}
 	}
 

@@ -86,7 +86,7 @@
                 <param name="ios-package" value="CDVSplashScreen"/>
                 <param name="onload" value="true"/>
             </feature>
-            <!-- 默认引导页   和  域名    -->
+            <!-- 默认引导页数目   和  动态配置域名    -->
             <preference name="GUIDE_DEF_NUM"    value="$GUIDE_DEF_NUM"/>
             <preference name="CONFIG_URL"       value="$CONFIG_URL"/>
         </config-file>

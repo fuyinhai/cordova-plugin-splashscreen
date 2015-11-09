@@ -163,16 +163,28 @@ screen visible for app startup.
                 注：1). 修改引导页时，记得同时修改引导页页数;
                     2). 。
 ```
-动态配置的 图片命名规则为 加载页和默认 meteor默认配置一致，引导页 命名如下
+##加载页 动态配置的 图片命名规则 默认 meteor默认配置一致。
 
 ```
-	a-guide-480h.png
-    b-guide-480h.png
-    c-guide-480h.png
-    
-    a-guide-568h.png
-    b-guide-568h.png
-    c-guide-568h.png
+例：	   Default-667h.png
+		Default-736h.png
+		Default-568h@2x~iphone.png
+		Default@2x~iphone.png
+		Default~iphone.png
+	
+	存放路径为：项目目录/public/splash/ 
+```
+
+
+## 默认引导页 配置
+
+```
+	因为无法在meteor工程中直接配置默认引导页的图片，故需要在打包app时执行如下操作：
+	1，把 cordova-plugin-splashscreen/src/ios/GuideImage 整个目录拖入到Xcode工程Resource目录下。
+	2，如需更换为自己项目图片，命名规则需和该目录下图片命名规则一致。
+
+
+
 
     android端启动页图片存放位置及命名规则：
     项目目录/public/splash/splash.png
